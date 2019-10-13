@@ -4,7 +4,7 @@
 
 int baronCardEffect(struct gameState *state, int currentPlayer, int choice1)
 {
-    state->numBuys++; //Increase buys by 1!
+    state->numBuys = state->numBuys + 2; //Increase buys by 1!
     if (choice1 > 0)
     {                               //Boolean true or going to discard an estate
         int p = 0;                  //Iterator for hand!
@@ -20,7 +20,7 @@ int baronCardEffect(struct gameState *state, int currentPlayer, int choice1)
                 {
                     state->hand[currentPlayer][p] = state->hand[currentPlayer][p + 1];
                 }
-                state->hand[currentPlayer][state->handCount[currentPlayer]] = -1;
+                //state->hand[currentPlayer][state->handCount[currentPlayer]] = -1;
                 state->handCount[currentPlayer]--;
                 card_not_discarded = 0; //Exit the loop
             }
@@ -89,7 +89,7 @@ int minionCardEffect(struct gameState *state, int currentPlayer, int choice1, in
         }
 
         //draw 4
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i <= 4; i++)
         {
             drawCard(currentPlayer, state);
         }
@@ -97,21 +97,18 @@ int minionCardEffect(struct gameState *state, int currentPlayer, int choice1, in
         //other players discard hand and redraw if hand size > 4
         for (int i = 0; i < state->numPlayers; i++)
         {
-            if (i != currentPlayer)
+            if (state->handCount[i] > 4)
             {
-                if (state->handCount[i] > 4)
+                //discard hand
+                while (state->handCount[i] > 0)
                 {
-                    //discard hand
-                    while (state->handCount[i] > 0)
-                    {
-                        discardCard(handPos, i, state, 0);
-                    }
+                    discardCard(handPos, i, state, 0);
+                }
 
-                    //draw 4
-                    for (int j = 0; j < 4; j++)
-                    {
-                        drawCard(i, state);
-                    }
+                //draw 4
+                for (int j = 0; j < 4; j++)
+                {
+                    drawCard(i, state);
                 }
             }
         }
@@ -124,15 +121,15 @@ int ambassadorCardEffect(struct gameState *state, int currentPlayer, int choice1
 {
     int j = 0; //used to check if player has enough cards to discard
 
-    if (choice2 > 2 || choice2 < 0)
-    {
-        return -1;
-    }
+    // if (choice2 > 2 || choice2 < 0)
+    // {
+    //     return -1;
+    // }
 
-    if (choice1 == handPos)
-    {
-        return -1;
-    }
+    // if (choice1 == handPos)
+    // {
+    //     return -1;
+    // }
 
     for (int i = 0; i < state->handCount[currentPlayer]; i++)
     {
@@ -177,7 +174,7 @@ int ambassadorCardEffect(struct gameState *state, int currentPlayer, int choice1
         }
     }
 
-    return 0;
+    return -1;
 }
 
 int tributeCardEffect(struct gameState *state, int currentPlayer, int nextPlayer)
@@ -236,15 +233,14 @@ int tributeCardEffect(struct gameState *state, int currentPlayer, int nextPlayer
 
     for (int i = 0; i <= 2; i++)
     {
-        if (tributeRevealedCards[i] == copper || tributeRevealedCards[i] == silver || tributeRevealedCards[i] == gold)
+        if (tributeRevealedCards[i] == copper && tributeRevealedCards[i] == silver && tributeRevealedCards[i] == gold)
         { //Treasure cards
             state->coins += 2;
         }
 
         else if (tributeRevealedCards[i] == estate || tributeRevealedCards[i] == duchy || tributeRevealedCards[i] == province || tributeRevealedCards[i] == gardens || tributeRevealedCards[i] == great_hall)
         { //Victory Card Found
-            drawCard(currentPlayer, state);
-            drawCard(currentPlayer, state);
+            drawCard(2, state);
         }
         else
         { //Action Card
@@ -259,10 +255,10 @@ int mineCardEffect(struct gameState *state, int currentPlayer, int choice1, int 
 {
     int j = state->hand[currentPlayer][choice1]; //store card we will trash
 
-    if (state->hand[currentPlayer][choice1] < copper || state->hand[currentPlayer][choice1] > gold)
-    {
-        return -1;
-    }
+    // if (state->hand[currentPlayer][choice1] < copper || state->hand[currentPlayer][choice1] > gold)
+    // {
+    //     return -1;
+    // }
 
     if (choice2 > treasure_map || choice2 < curse)
     {
@@ -277,7 +273,7 @@ int mineCardEffect(struct gameState *state, int currentPlayer, int choice1, int 
     gainCard(choice2, state, 2, currentPlayer);
 
     //discard card from hand
-    discardCard(handPos, currentPlayer, state, 0);
+    //discardCard(handPos, currentPlayer, state, 0);
 
     //discard trashed card
     for (int i = 0; i < state->handCount[currentPlayer]; i++)
