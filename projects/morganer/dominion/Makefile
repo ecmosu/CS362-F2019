@@ -10,7 +10,7 @@ dominion_helpers.o: dominion_helpers.h dominion_helpers.c
 	gcc -c dominion_helpers.c -g  $(CFLAGS)
 
 dominion.o: dominion.h dominion.c rngs.o cardEffects.o dominion_helpers.o
-	gcc -c dominion.c -g  $(CFLAGS)
+	gcc -c dominion.c -g $(CFLAGS)
 
 playdom: dominion.o playdom.c
 	gcc -o playdom playdom.c -g cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
@@ -29,7 +29,7 @@ runtests: testDrawCard
 
 
 player: player.c interface.o
-	gcc -o player player.c -g  dominion.o rngs.o interface.o $(CFLAGS)
+	gcc -o player player.c -g cardEffects.o dominion_helpers.o dominion.o rngs.o interface.o $(CFLAGS)
 
 all: playdom player 
 
