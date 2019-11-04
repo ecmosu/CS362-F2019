@@ -233,17 +233,21 @@ int tributeCardEffect(struct gameState *state, int currentPlayer, int nextPlayer
 
     for (int i = 0; i <= 2; i++)
     {
+        printf("Revealed Card: (%d)\n", tributeRevealedCards[i]);
         if (tributeRevealedCards[i] == copper && tributeRevealedCards[i] == silver && tributeRevealedCards[i] == gold)
         { //Treasure cards
+            printf("Adding Coins\n");
             state->coins += 2;
         }
 
         else if (tributeRevealedCards[i] == estate || tributeRevealedCards[i] == duchy || tributeRevealedCards[i] == province || tributeRevealedCards[i] == gardens || tributeRevealedCards[i] == great_hall)
         { //Victory Card Found
+            printf("Adding Cards\n");
             drawCard(2, state);
         }
         else
         { //Action Card
+            printf("Adding Actions\n");
             state->numActions = state->numActions + 2;
         }
     }

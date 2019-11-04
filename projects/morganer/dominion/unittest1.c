@@ -1,4 +1,3 @@
-
 #include "dominion.h"
 #include "dominion_helpers.h"
 #include <string.h>
@@ -8,7 +7,8 @@
 
 #define DEBUG 0
 
-void unitTestOutpost()
+//Unit Tests For Baron
+void baronUnitTest1()
 {
     //Set Card Array
     int k[10] = {adventurer, council_room, feast, gardens, mine,
@@ -18,28 +18,46 @@ void unitTestOutpost()
     struct gameState G;
     initializeGame(2, k, 1, &G);
 
-    //Set first cards in hand to mine and silver
-    G.hand[G.whoseTurn][0] = outpost;
+    //Set first cards in hand to baron card
+    G.hand[G.whoseTurn][0] = baron;
 
     //Update coins to account for potential impact to changing first card.
     updateCoins(0, &G, 0);
 
-    int currentPlayerTurn = G.whoseTurn;
-    printf("Outpost Card Effect Result - Current Player Turn (%d)\n", currentPlayerTurn);
-    playCard(0, 0, 0, 0, &G);
-    printf("Outpost Card Effect Result - Outposts Played == 1 (%d)\n", G.outpostPlayed);
-    endTurn(&G);
 
-    int nextPlayerTurn = G.whoseTurn;
-    printf("Outpost Card Effect Result - Next Player Turn (%d)\n", nextPlayerTurn);
+    int startBuys = G.numBuys;
+    int bonus = 0;
+    cardEffect(baron, 1, 0, 0,&G, 0, &bonus);
 
-    //When an Outpost card is played it allows the player to take an extra turn after their current turn is over.
-    //The current implementation of the Outpost card increments a flag tracking if the card was played, but does
-    //not currently grant the player an extra turn.
-    assert(currentPlayerTurn == nextPlayerTurn);
+    printf("Baron Card Effect Result - End Num Buys (%d) == Start Num Buys + 1 (%d)\n", G.numBuys, (startBuys + 1));
+}
+
+void baronUnitTest2()
+{
+    //Set Card Array
+    int k[10] = {adventurer, council_room, feast, gardens, mine,
+                 remodel, smithy, village, baron, great_hall};
+
+    //Setup Game State
+    struct gameState G;
+    initializeGame(2, k, 1, &G);
+
+    //Set first cards in hand to baron card
+    G.hand[G.whoseTurn][0] = baron;
+
+    //Update coins to account for potential impact to changing first card.
+    updateCoins(0, &G, 0);
+
+
+    int startBuys = G.numBuys;
+    int bonus = 0;
+    cardEffect(baron, 0, 0, 0,&G, 0, &bonus);
+
+    printf("Baron Card Effect Result - End Num Buys (%d) == Start Num Buys + 1 (%d)\n", G.numBuys, (startBuys + 1));
 }
 
 int main()
 {
-    unitTestOutpost();
+    baronUnitTest1();
+    baronUnitTest2();
 }
