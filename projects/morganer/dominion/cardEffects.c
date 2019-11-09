@@ -16,10 +16,10 @@ int baronCardEffect(struct gameState *state, int currentPlayer, int choice1)
                 state->coins += 4; //Add 4 coins to the amount of coins
                 state->discard[currentPlayer][state->discardCount[currentPlayer]] = state->hand[currentPlayer][p];
                 state->discardCount[currentPlayer]++;
-                for (; p < state->handCount[currentPlayer]; p++)
-                {
-                    state->hand[currentPlayer][p] = state->hand[currentPlayer][p + 1];
-                }
+                //for (; p < state->handCount[currentPlayer]; p++)
+                //{
+                //    state->hand[currentPlayer][p] = state->hand[currentPlayer][p + 1];
+                //}
                 //state->hand[currentPlayer][state->handCount[currentPlayer]] = -1;
                 state->handCount[currentPlayer]--;
                 card_not_discarded = 0; //Exit the loop
@@ -138,6 +138,7 @@ int ambassadorCardEffect(struct gameState *state, int currentPlayer, int choice1
             j++;
         }
     }
+
     if (j < choice2)
     {
         return -1;
@@ -147,6 +148,7 @@ int ambassadorCardEffect(struct gameState *state, int currentPlayer, int choice1
         printf("Player %d reveals card number: %d\n", currentPlayer, state->hand[currentPlayer][choice1]);
 
     //increase supply count for choosen card by amount being discarded
+    
     state->supplyCount[state->hand[currentPlayer][choice1]] += choice2;
 
     //each other player gains a copy of revealed card
@@ -233,21 +235,17 @@ int tributeCardEffect(struct gameState *state, int currentPlayer, int nextPlayer
 
     for (int i = 0; i <= 2; i++)
     {
-        printf("Revealed Card: (%d)\n", tributeRevealedCards[i]);
         if (tributeRevealedCards[i] == copper && tributeRevealedCards[i] == silver && tributeRevealedCards[i] == gold)
         { //Treasure cards
-            printf("Adding Coins\n");
             state->coins += 2;
         }
 
         else if (tributeRevealedCards[i] == estate || tributeRevealedCards[i] == duchy || tributeRevealedCards[i] == province || tributeRevealedCards[i] == gardens || tributeRevealedCards[i] == great_hall)
         { //Victory Card Found
-            printf("Adding Cards\n");
             drawCard(2, state);
         }
         else
         { //Action Card
-            printf("Adding Actions\n");
             state->numActions = state->numActions + 2;
         }
     }

@@ -1,5 +1,6 @@
 #include "cardEffects.h"
 #include "dominion_helpers.h"
+#include <stdarg.h>
 #include <stdio.h>
 
 int drawCard(int player, struct gameState *state)
@@ -567,4 +568,26 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
     }
 
     return -1;
+}
+
+void assert(int condition, const char* message, ...)
+{
+    if(DEBUG || !condition)
+    {
+        char messageBuf[250];
+        va_list args;
+        va_start(args, message);
+        vsnprintf(messageBuf, sizeof(messageBuf), message, args);
+        va_end(args);
+
+        if(!condition)
+        {
+            printf("FAILED - %s", messageBuf);
+        }
+        else
+        {
+            printf("DEBUG - %s", messageBuf);
+        }
+        
+    }
 }

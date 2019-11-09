@@ -27,18 +27,18 @@ runtests: testDrawCard
 	gcov dominion.c >> unittestresult.out
 	cat dominion.c.gcov >> unittestresult.out
 
-unittestresults: unittest1.c unittest2.c unittest3.c unittest4.c unittest5.c dominion.o rngs.o
-	gcc  -o unittest1 -g  unittest1.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
-	gcc  -o unittest2 -g  unittest2.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
-	gcc  -o unittest3 -g  unittest3.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
-	gcc  -o unittest4 -g  unittest4.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
-	gcc  -o unittest5 -g  unittest5.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
-	./unittest1
-	./unitTest2
-	./unitTest3
-	./unitTest4
-	./unitTest5
-	gcov -f cardEffects.c
+unittestresults: clean unittest1.c unittest2.c unittest3.c unittest4.c unittest5.c dominion.o dominion_helpers.o rngs.o
+	gcc  -o unittest1.ut -g  unittest1.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
+	gcc  -o unittest2.ut -g  unittest2.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
+	gcc  -o unittest3.ut -g  unittest3.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
+	gcc  -o unittest4.ut -g  unittest4.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
+	gcc  -o unittest5.ut -g  unittest5.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
+	./unittest1.ut
+	./unitTest2.ut
+	./unitTest3.ut
+	./unitTest4.ut
+	./unitTest5.ut
+	gcov -f -b cardEffects.c
 	# cat cardEffects.c.gcov
 
 player: player.c interface.o
@@ -47,4 +47,4 @@ player: player.c interface.o
 all: playdom player 
 
 clean:
-	rm -f *.o playdom.exe playdom player player.exe  *.gcov *.gcda *.gcno *.so *.out testDrawCard testDrawCard.exe
+	rm -f *.o playdom.exe playdom player player.exe *.ut *.gcov *.gcda *.gcno *.so *.out testDrawCard testDrawCard.exe
