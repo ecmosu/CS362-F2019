@@ -33,12 +33,12 @@ unittestresults: clean unittest1.c unittest2.c unittest3.c unittest4.c unittest5
 	gcc  -o unittest3.ut -g  unittest3.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
 	gcc  -o unittest4.ut -g  unittest4.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
 	gcc  -o unittest5.ut -g  unittest5.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
-	./unittest1.ut
-	./unitTest2.ut
-	./unitTest3.ut
-	./unitTest4.ut
-	./unitTest5.ut
-	gcov -f -b cardEffects.c
+	./unittest1.ut >> unittestresults.out
+	./unitTest2.ut >> unittestresults.out
+	./unitTest3.ut >> unittestresults.out
+	./unitTest4.ut >> unittestresults.out
+	./unitTest5.ut >> unittestresults.out
+	gcov -f -b cardEffects.c >> unittestresults.out
 	# cat cardEffects.c.gcov
 
 player: player.c interface.o

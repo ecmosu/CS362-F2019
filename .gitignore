@@ -45,6 +45,7 @@
 *.pdb
 
 # Kernel Module Compile Results
+*.gcov
 *.mod*
 *.cmd
 .tmp_versions/

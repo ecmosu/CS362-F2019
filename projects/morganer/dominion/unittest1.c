@@ -55,6 +55,7 @@ void baronUnitTest1()
     }
 
     assert(G.numBuys == (preG.numBuys + 1), "%s - End Num Buys (%d) == Start Num Buys + 1 (%d)\n", messagePrefix, G.numBuys, (preG.numBuys + 1));
+    assert(G.coins == (preG.coins + 4), "%s - End Num Coins (%d) == Start Num Coins + 4 (%d)\n", messagePrefix, G.coins, (preG.coins + 4));
     assert(estateCountAfter == (estateCountBefore - 1), "%s - Ending Estate Cards (%d) == Starting Estate Cards - 1 (%d)\n", messagePrefix, estateCountAfter, (estateCountBefore - 1));
     assert(result == 0, "%s - (%d) == 0\n", messagePrefix, result);
 }
@@ -110,9 +111,10 @@ void baronUnitTest2()
     }
 
     assert(G.numBuys == (preG.numBuys + 1), "%s - End Num Buys (%d) == Start Num Buys + 1 (%d)\n", messagePrefix, G.numBuys, (preG.numBuys + 1));
+    assert(G.coins == (preG.coins), "%s - End Num Coins (%d) == Start Num Coins (%d)\n", messagePrefix, G.coins, (preG.coins));
     //These two should be accurate though an existing bug at line 36 does not add to hand, but instead adds to discard
-    assert(estateCountAfter == (estateCountBefore + 1), "%s - Ending Estate Cards (%d) == Starting Estate Cards + 1 (%d)\n", messagePrefix, estateCountAfter, (estateCountBefore + 1));
-    assert(G.discardCount[G.whoseTurn] == preG.discardCount[preG.whoseTurn], "%s - Ending Discard Cards (%d) == Starting Discard Cards (%d)\n", messagePrefix, G.discardCount[G.whoseTurn], preG.discardCount[preG.whoseTurn]);
+    assert(estateCountAfter == (estateCountBefore), "%s - Ending Estate Cards In Hand (%d) == Starting Estate Cards In Hand (%d)\n", messagePrefix, estateCountAfter, (estateCountBefore));
+    assert(G.discardCount[G.whoseTurn] == (preG.discardCount[preG.whoseTurn] + 1), "%s - Ending Discard Cards (%d) == Starting Discard Cards + 1 (%d)\n", messagePrefix, G.discardCount[G.whoseTurn], (preG.discardCount[preG.whoseTurn] + 1));
     assert(result == 0, "%s - (%d) == 0\n", messagePrefix, result);
 }
 
@@ -130,9 +132,17 @@ void baronUnitTest3()
 
     //Set first cards in hand to baron card
     G.hand[G.whoseTurn][0] = baron;
+    G.handCount[G.whoseTurn] = 1;
 
     //Update coins to account for potential impact to changing first card.
     updateCoins(0, &G, 0);
+
+    int estateCountBefore = 0;
+    for (int i = 0; i < G.handCount[G.whoseTurn]; i++)
+    {
+        if (G.hand[G.whoseTurn][i] == estate)
+            estateCountBefore++;
+    }
 
     //Save current game state
     struct gameState preG;
@@ -141,7 +151,16 @@ void baronUnitTest3()
     int bonus = 0;
     int result = cardEffect(baron, 0, 0, 0, &G, 0, &bonus);
 
+    int estateCountAfter = 0;
+    for (int i = 0; i < G.handCount[G.whoseTurn]; i++)
+    {
+        if (G.hand[G.whoseTurn][i] == estate)
+            estateCountAfter++;
+    }
+
     assert(G.numBuys == (preG.numBuys + 1), "%s - End Num Buys (%d) == Start Num Buys + 1 (%d)\n", messagePrefix, G.numBuys, (preG.numBuys + 1));
+    assert(estateCountAfter == (estateCountBefore), "%s - Ending Estate Cards In Hand (%d) == Starting Estate Cards In Hand (%d)\n", messagePrefix, estateCountAfter, (estateCountBefore));
+    assert(G.discardCount[G.whoseTurn] == (preG.discardCount[preG.whoseTurn] + 1), "%s - Ending Discard Cards (%d) == Starting Discard Cards + 1 (%d)\n", messagePrefix, G.discardCount[G.whoseTurn], (preG.discardCount[preG.whoseTurn] + 1));
     assert(result == 0, "%s - (%d) == 0\n", messagePrefix, result);
 }
 
