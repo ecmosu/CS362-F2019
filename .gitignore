@@ -43,6 +43,9 @@
 *.su
 *.idb
 *.pdb
+*.ut
+*.rt
+*.gcov
 
 # Kernel Module Compile Results
 *.mod*
