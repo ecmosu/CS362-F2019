@@ -32,22 +32,47 @@ int minionRandomTester()
 
     //Randomize number of additional cards in hand other than Minion between 0 and 5
     int numCards = round(Random() * 5);
-    for(int numCard = 1; numCard <= numCards; numCard++)
+    for (int numCard = 1; numCard <= numCards; numCard++)
     {
-        //Insert random card between 0 (curse) and 26 (treasure_map) 
+        //Insert random card between 0 (curse) and 26 (treasure_map)
         G.hand[G.whoseTurn][numCard] = round(Random() * treasure_map);
     }
-    
+
     G.handCount[G.whoseTurn] += numCards;
 
     //Update coins to account for potential impact to changing first card.
     updateCoins(0, &G, 0);
+
+    //Save current game state
+    struct gameState preG;
+    memcpy(&preG, &G, sizeof(struct gameState));
 
     //Randomize card choice
     int choice1 = round(Random() * 1);
     int choice2 = round(Random() * 1);
     int result = minionCardEffect(&G, G.whoseTurn, choice1, choice2, 0);
     //printf("Minion - Number of Cards: %d - Choice 1 Selection: %d - Result: %d\n", G.handCount[G.whoseTurn], choice1, result);
+    if (result != 0)
+        return result;
+
+    if (choice1)
+    {
+        if (preG.coins != (G.coins - 2))
+        {
+            result++;
+        }
+    }
+
+    if (choice2)
+    {
+        if (preG.deckCount[preG.whoseTurn] != (G.deckCount[G.whoseTurn] + 4)
+        || preG.discardCount[preG.whoseTurn] != (G.discardCount[G.whoseTurn] - 1)
+        || preG.playedCardCount != G.playedCardCount)
+        {
+            result++;
+        }
+    }
+
     return result;
 }
 
@@ -58,9 +83,9 @@ int main()
 
     int numSuccess = 0;
     int totalTests = 1000;
-    for(int numTest = 1; numTest <= totalTests; numTest++)
+    for (int numTest = 1; numTest <= totalTests; numTest++)
     {
-        if(minionRandomTester() == 0)
+        if (minionRandomTester() == 0)
         {
             numSuccess++;
         }

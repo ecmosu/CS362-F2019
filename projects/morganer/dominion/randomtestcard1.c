@@ -35,10 +35,16 @@ int baronRandomTester()
 
     //Randomize number of additional cards in hand other than Baron between 0 and 5
     int numCards = round(Random() * 5);
+    int estateCount = 0;
     for(int numCard = 1; numCard <= numCards; numCard++)
     {
         //Insert random card between 0 (curse) and 26 (treasure_map) 
         G.hand[G.whoseTurn][numCard] = round(Random() * treasure_map);
+
+        if(G.hand[G.whoseTurn][numCard] == estate)
+        {
+            estateCount++;
+        }
     }
     
     G.handCount[G.whoseTurn] += numCards;
@@ -46,10 +52,33 @@ int baronRandomTester()
     //Update coins to account for potential impact to changing first card.
     updateCoins(0, &G, 0);
 
+    //Save current game state
+    struct gameState preG;
+    memcpy(&preG, &G, sizeof(struct gameState));
+
     //Randomize card choice
     int choice1 = round(Random() * 1);
     int result = baronCardEffect(&G, G.whoseTurn, choice1);
+
     //printf("Baron - Number of Cards: %d - Choice 1 Selection: %d - Result: %d\n", G.handCount[G.whoseTurn], choice1, result);
+    if (result != 0)
+        return result;
+
+    if(choice1 && estateCount > 0 && G.coins != (preG.coins + 4))
+    {
+        result++;
+    }
+
+    if(choice1 && estateCount == 0 && G.coins != preG.coins)
+    {
+        result++;
+    }
+
+    if(!choice1 && G.discardCount[G.whoseTurn] != (preG.discardCount[preG.whoseTurn] + 1))
+    {
+        result++;
+    }
+
     return result;
 }
 
