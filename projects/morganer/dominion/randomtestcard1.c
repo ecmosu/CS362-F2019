@@ -64,17 +64,26 @@ int baronRandomTester()
     if (result != 0)
         return result;
 
+    //Check if coin bonus properly applied when estate present
     if(choice1 && estateCount > 0 && G.coins != (preG.coins + 4))
     {
         result++;
     }
 
+    //Check if coin bonus not applied when no estate present
     if(choice1 && estateCount == 0 && G.coins != preG.coins)
     {
         result++;
     }
 
+    //Check to ensure gain was put in discard 
     if(!choice1 && G.discardCount[G.whoseTurn] != (preG.discardCount[preG.whoseTurn] + 1))
+    {
+        result++;
+    }
+
+    //Check buys bonus
+    if(G.numBuys != (preG.numBuys + 1))
     {
         result++;
     }

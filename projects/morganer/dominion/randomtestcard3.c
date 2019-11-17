@@ -93,10 +93,11 @@ int tributeRandomTester()
 
     //Randomize card choice
     int result = tributeCardEffect(&G, G.whoseTurn, G.whoseTurn + 1);
+    //printf("%d, %d, %d\n", victoryBonusExpected, treasureBonusExpected, actionBonusExpected);
     //printf("Tribute - Number of Cards: %d - Result: %d\n", G.handCount[G.whoseTurn], result);
     if(result != 0) return result;
 
-    //Assess when next player deck had cards
+    //Assess when next player's deck had cards available.  Actions should be applied as applicable.
     if(preG.deckCount[preG.whoseTurn + 1] > 0)
     {
         if(treasureBonusExpected > 0 && preG.coins == G.coins)
@@ -113,8 +114,24 @@ int tributeRandomTester()
         {
             result++;
         }
+
+        if(treasureBonusExpected == 0 && preG.coins != G.coins)
+        {
+            result++;
+        }
+
+        if(victoryBonusExpected == 0 && preG.hand[G.whoseTurn] != G.hand[G.whoseTurn])
+        {
+            result++;
+        }
+
+        if(actionBonusExpected == 0 && preG.numActions != G.numActions)
+        {
+            result++;
+        }
     }
 
+    //If next player has no cards available, no bonus should be applied.
     if(preG.deckCount[preG.whoseTurn + 1] == 0 && preG.discardCount[preG.whoseTurn + 1] == 0)
     {
         if(preG.coins != G.coins 

@@ -32,12 +32,10 @@ randomtestresults: clean randomtestcard1.c randomtestcard2.c randomtestcard3.c d
 	gcc  -o randomtestcard1.rt -g  randomtestcard1.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
 	gcc  -o randomtestcard2.rt -g  randomtestcard2.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
 	gcc  -o randomtestcard3.rt -g  randomtestcard3.c cardEffects.o dominion_helpers.o dominion.o rngs.o $(CFLAGS)
-	./randomtestcard1.rt
-	./randomtestcard2.rt
-	./randomtestcard3.rt
-	gcov -f -b cardEffects.c
-	# ./randomtestcard1.ut >> randomtestresults.out
-	# gcov -f -b cardEffects.c >> randomtestresults.out
+	./randomtestcard1.rt >> randomtestresults.out
+	./randomtestcard2.rt >> randomtestresults.out
+	./randomtestcard3.rt >> randomtestresults.out
+	gcov -f -b cardEffects.c >> randomtestresults.out
 	# cat cardEffects.c.gcov
 
 player: player.c interface.o

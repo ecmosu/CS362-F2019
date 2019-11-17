@@ -55,7 +55,8 @@ int minionRandomTester()
     if (result != 0)
         return result;
 
-    if (choice1)
+    //Ensure coins properly added if choice 1 made
+    if (choice1 && !choice2)
     {
         if (preG.coins != (G.coins - 2))
         {
@@ -63,10 +64,11 @@ int minionRandomTester()
         }
     }
 
-    if (choice2)
+    //Ensure discard actions properly completed.
+    if (choice2 || (choice1 && choice2))
     {
         if (preG.deckCount[preG.whoseTurn] != (G.deckCount[G.whoseTurn] + 4)
-        || preG.discardCount[preG.whoseTurn] != (G.discardCount[G.whoseTurn] - 1)
+        || preG.discardCount[preG.whoseTurn] != (G.discardCount[G.whoseTurn] - preG.handCount[G.whoseTurn])
         || preG.playedCardCount != G.playedCardCount)
         {
             result++;
