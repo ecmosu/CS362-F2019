@@ -1,85 +1,96 @@
 #include "dominion.h"
 #include "dominion_helpers.h"
-#include "rngs.h"
-#include <stdio.h>
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <stdio.h>
+#include <math.h>
+#include "rngs.h"
 
-#define TESTCARD "Minion"
+//Random Tests For Minion
+int minionRandomTester()
+{
+    //Set Card Array
+    int k[10] = {adventurer, council_room, feast, gardens, mine,
+                 remodel, smithy, village, baron, great_hall};
 
-int main() {
+    //Setup Game State
+    struct gameState G;
+    initializeGame(2, k, 1, &G);
 
-    srand(time(NULL));
-	
-	int k[10] = {adventurer, baron, village, minion, mine, cutpurse,
-			sea_hag, tribute, smithy, council_room};
-	
-	int successfulTests = 0;
-	int failedTests = 0;
-	int numberOfTests = 0;
+    //Set Randomizor Stream
+    SelectStream(2);
 
-	printf("----------------- Testing Card: %s ----------------\n", TESTCARD);
-
-
-    while(numberOfTests != 30){
-		int numPlayers = 2 + (rand() % 3);
-		int thisPlayer = 0;
-		int seed = 10 + (rand() % 1001);
-		
-		struct gameState *G = malloc(sizeof(struct gameState));
-
-		initializeGame(numPlayers, k, seed, G);
-
-		G->handCount[thisPlayer] = 1 + (rand() % 200);
-		for(int i=0; i<G->handCount[thisPlayer]; i++){
-			G->hand[thisPlayer][i] = rand() % 28;
-		}
-		G->handCount[thisPlayer+1] = rand() % 200;
-		
-		G->deckCount[thisPlayer] = rand() % 200;
-		G->discardCount[thisPlayer] = rand() % 200;
-		G->deckCount[thisPlayer+1] = rand() % 200;
-		G->discardCount[thisPlayer+1] = rand() % 200;
-		G->coins = 0;
-		int origDiscardCntCPlayer = G->discardCount[thisPlayer];
-		int origHandCntCPlayer = G->handCount[thisPlayer];
-		int origCoin = G->coins;
-		//int origDiscardCntNextPlayer = G->discardCount[thisPlayer+1];
-		//int origHandCntNextPlayer = G->handCount[thisPlayer+1];
-		
-		int handpos;
-		if(G->handCount[thisPlayer] == 0){
-			handpos = 0;
-		} else {
-			handpos = rand() % G->handCount[thisPlayer];
-		}
-		int choice1 = rand() % 2; 
-		int choice2 = rand() % 2;
-		int choice3 = rand() % 2;
-		int bonus = rand() % 2;
-
-		cardEffect(minion, choice1, choice2, choice3, G, handpos, &bonus);
-
-		if(choice1 == 1 && G->discardCount[thisPlayer] == origDiscardCntCPlayer+origHandCntCPlayer && G->coins == origCoin+2){
-			successfulTests++;
-		}
-		else if(choice1 == 0 && choice2 == 1 && G->discardCount[thisPlayer] == origDiscardCntCPlayer+origHandCntCPlayer && G->handCount[thisPlayer] == 4){
-			successfulTests++;
-		}
-		else {
-			failedTests++;
-		}
-
-		numberOfTests++;
-		free(G);
+    //Reset Hand
+    for (int i = 0; i < G.handCount[G.whoseTurn]; i++)
+    {
+        G.hand[G.whoseTurn][i] = -1;
     }
 
+    //Set first card in hand to minion card
+    G.hand[G.whoseTurn][0] = minion;
+    G.handCount[G.whoseTurn] = 1;
 
-	printf("\n >>>>> SUCCESS: Testing complete %s <<<<<\n", TESTCARD);
-	printf("Successful Tests = %d, Failed Tests = %d.\n\n", successfulTests, failedTests);
-	
-	return 0;
+    //Randomize number of additional cards in hand other than Minion between 0 and 5
+    int numCards = round(Random() * 5);
+    for (int numCard = 1; numCard <= numCards; numCard++)
+    {
+        //Insert random card between 0 (curse) and 26 (treasure_map)
+        G.hand[G.whoseTurn][numCard] = round(Random() * treasure_map);
+    }
+
+    G.handCount[G.whoseTurn] += numCards;
+
+    //Update coins to account for potential impact to changing first card.
+    updateCoins(0, &G, 0);
+
+    //Save current game state
+    struct gameState preG;
+    memcpy(&preG, &G, sizeof(struct gameState));
+
+    //Randomize card choice
+    int choice1 = round(Random() * 1);
+    int choice2 = round(Random() * 1);
+    int result = minionCard(choice1, choice2, &G, 0);
+    //printf("Minion - Number of Cards: %d - Choice 1 Selection: %d - Result: %d\n", G.handCount[G.whoseTurn], choice1, result);
+    if (result != 0)
+        return result;
+
+    //Ensure coins properly added if choice 1 made
+    if (choice1 && !choice2)
+    {
+        if (preG.coins != (G.coins - 2))
+        {
+            result++;
+        }
+    }
+
+    //Ensure discard actions properly completed.
+    if (choice2 || (choice1 && choice2))
+    {
+        if (preG.deckCount[preG.whoseTurn] != (G.deckCount[G.whoseTurn] + 4)
+        || preG.discardCount[preG.whoseTurn] != (G.discardCount[G.whoseTurn] - preG.handCount[G.whoseTurn])
+        || preG.playedCardCount != G.playedCardCount)
+        {
+            result++;
+        }
+    }
+
+    return result;
+}
+
+int main()
+{
+    SelectStream(2);
+    PutSeed((long)1);
+
+    int numSuccess = 0;
+    int totalTests = 1000;
+    for (int numTest = 1; numTest <= totalTests; numTest++)
+    {
+        if (minionRandomTester() == 0)
+        {
+            numSuccess++;
+        }
+    }
+
+    printf("Minion - Number of Successful Tests: %d out of %d\n", numSuccess, totalTests);
 }

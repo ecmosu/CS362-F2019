@@ -1,348 +1,163 @@
 #include "dominion.h"
 #include "dominion_helpers.h"
-#include "rngs.h"
-#include <stdio.h>
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <stdio.h>
+#include <math.h>
+#include "rngs.h"
 
-#define TESTCARD "Tribute"
-
-int cardType(int cardValue)
+//Random Tests For Tribute
+int tributeRandomTester()
 {
-    if (cardValue >= 4 && cardValue <= 6)
+    int treasureBonusExpected = 0;
+    int victoryBonusExpected = 0;
+    int actionBonusExpected = 0;
+
+    //Set Card Array
+    int k[10] = {adventurer, council_room, feast, gardens, mine,
+                 remodel, smithy, village, baron, great_hall};
+
+    //Setup Game State
+    struct gameState G;
+    initializeGame(2, k, 1, &G);
+
+    //Set Randomizor Stream
+    SelectStream(2);
+
+    //Reset Hand
+    for (int i = 0; i < G.handCount[G.whoseTurn]; i++)
     {
-        return 1;
+        G.hand[G.whoseTurn][i] = -1;
     }
-    else if (cardValue >= 7 && cardValue != 10 && cardValue != 16)
+
+    //Set first card in hand to tribute card
+    G.hand[G.whoseTurn][0] = tribute;
+    G.handCount[G.whoseTurn] = 1;
+
+    //Randomize next player's deck between 0 to 5.
+    G.deckCount[G.whoseTurn + 1] = round(Random() * 5);
+    for (int numCard = 0; numCard < G.deckCount[G.whoseTurn + 1]; numCard++)
     {
-        return 2;
+        //Insert random card between 0 (curse) and 26 (treasure_map)
+        G.deck[G.whoseTurn + 1][numCard] = round(Random() * treasure_map);
     }
-    else
+
+    int cardIndex = G.deckCount[G.whoseTurn + 1] - 1;
+    //Determine Expected Bonus
+
+    while (cardIndex >= 0 && cardIndex >= (G.deckCount[G.whoseTurn + 1] - 2))
     {
-        if (cardValue != 0)
-        {
-            return 3;
+        int numCard = G.deck[G.whoseTurn + 1][cardIndex];
+
+        if (numCard >= estate && numCard <= province)
+        { //Victory card
+            victoryBonusExpected++;
         }
-        else
+        else if (numCard >= copper && numCard <= gold)
+        { //Treasure card
+            treasureBonusExpected++;
+        }
+
+        else if (numCard > gold)
+        { //Action card
+            actionBonusExpected++;
+        }
+
+        cardIndex--;
+    }
+
+    //Randomize next player's discard pile between 0 to 5.
+    G.discardCount[G.whoseTurn + 1] = round(Random() * 5);
+    for (int numCard = 0; numCard < G.discardCount[G.whoseTurn + 1]; numCard++)
+    {
+        //Insert random card between 0 (curse) and 26 (treasure_map)
+        G.discard[G.whoseTurn + 1][numCard] = round(Random() * treasure_map);
+    }
+
+    //Randomize number of additional cards in hand other than Tribute between 0 and 5
+    int numCards = round(Random() * 5);
+    for (int numCard = 1; numCard <= numCards; numCard++)
+    {
+        //Insert random card between 0 (curse) and 26 (treasure_map)
+        G.hand[G.whoseTurn][numCard] = round(Random() * treasure_map);
+    }
+
+    G.handCount[G.whoseTurn] += numCards;
+
+    //Update coins to account for potential impact to changing first card.
+    updateCoins(0, &G, 0);
+
+    //Save current game state
+    struct gameState preG;
+    memcpy(&preG, &G, sizeof(struct gameState));
+
+    //Randomize card choice
+    int result = tributeCard(&G);
+    //printf("%d, %d, %d\n", victoryBonusExpected, treasureBonusExpected, actionBonusExpected);
+    //printf("Tribute - Number of Cards: %d - Result: %d\n", G.handCount[G.whoseTurn], result);
+    if(result != 0) return result;
+
+    //Assess when next player's deck had cards available.  Actions should be applied as applicable.
+    if(preG.deckCount[preG.whoseTurn + 1] > 0)
+    {
+        if(treasureBonusExpected > 0 && preG.coins == G.coins)
         {
-            return 0;
+            result++;
+        }
+
+        if(victoryBonusExpected > 0 && preG.hand[G.whoseTurn] == G.hand[G.whoseTurn])
+        {
+            result++;
+        }
+
+        if(actionBonusExpected > 0 && preG.numActions == G.numActions)
+        {
+            result++;
+        }
+
+        if(treasureBonusExpected == 0 && preG.coins != G.coins)
+        {
+            result++;
+        }
+
+        if(victoryBonusExpected == 0 && preG.hand[G.whoseTurn] != G.hand[G.whoseTurn])
+        {
+            result++;
+        }
+
+        if(actionBonusExpected == 0 && preG.numActions != G.numActions)
+        {
+            result++;
         }
     }
+
+    //If next player has no cards available, no bonus should be applied.
+    if(preG.deckCount[preG.whoseTurn + 1] == 0 && preG.discardCount[preG.whoseTurn + 1] == 0)
+    {
+        if(preG.coins != G.coins 
+        || preG.hand[G.whoseTurn] != G.hand[G.whoseTurn]
+        || preG.numActions != G.numActions)
+        {
+            result++;
+        }
+    }
+
+    return result;
 }
 
 int main()
 {
+    SelectStream(2);
+    PutSeed((long)1);
 
-    srand(time(NULL));
-
-    int k[10] = {adventurer, baron, village, minion, mine, cutpurse,
-                 sea_hag, tribute, smithy, council_room};
-
-    int successfulTests = 0;
-    int failedTests = 0;
-    int numberOfTests = 0;
-
-    printf("----------------- Testing Card: %s ----------------\n", TESTCARD);
-
-    while (numberOfTests != 30)
+    int numSuccess = 0;
+    int totalTests = 1000;
+    for (int numTest = 1; numTest <= totalTests; numTest++)
     {
-        int numPlayers = 2 + (rand() % 3);
-        int thisPlayer = 0;
-        int nextPlayer = 1;
-        int seed = 10 + (rand() % 1001);
-
-        struct gameState *G = malloc(sizeof(struct gameState));
-
-        initializeGame(numPlayers, k, seed, G);
-
-        //Initialize handCount for this player and nextplayer
-        G->handCount[thisPlayer] = 1 + (rand() % 10);
-        for (int i = 0; i < G->handCount[thisPlayer]; i++)
+        if (tributeRandomTester() == 0)
         {
-            G->hand[thisPlayer][i] = rand() % 28;
+            numSuccess++;
         }
-        G->handCount[nextPlayer] = rand() % 10;
-        for (int i = 0; i < G->handCount[nextPlayer]; i++)
-        {
-            G->hand[nextPlayer][i] = rand() % 28;
-        }
-
-        //Initialize deckCount for this player and nextplayer
-        G->deckCount[thisPlayer] = rand() % 10;
-        for (int i = 0; i < G->deckCount[thisPlayer]; i++)
-        {
-            G->deck[thisPlayer][i] = rand() % 28;
-        }
-        G->deckCount[nextPlayer] = rand() % 10;
-        for (int i = 0; i < G->deckCount[nextPlayer]; i++)
-        {
-            G->deck[thisPlayer][i] = rand() % 28;
-        }
-
-        //Initialize discardCount for this player and nextplayer
-        G->discardCount[thisPlayer] = rand() % 10;
-        for (int i = 0; i < G->discardCount[thisPlayer]; i++)
-        {
-            G->discard[thisPlayer][i] = rand() % 28;
-        }
-        G->discardCount[nextPlayer] = rand() % 10;
-        for (int i = 0; i < G->discardCount[nextPlayer]; i++)
-        {
-            G->discard[nextPlayer][i] = rand() % 28;
-        }
-
-        G->coins = 0;
-        G->numActions = 0;
-
-        //Initialize original values before the game starts
-        //int origDiscardCntCPlayer = G->discardCount[thisPlayer];
-        //int origDeckCntCPlayer = G->deckCount[thisPlayer];
-        int origHandCntCPlayer = G->handCount[thisPlayer];
-        int origDiscardCntNextPlayer = G->discardCount[nextPlayer];
-        int origDeckCntNextPlayer = G->deckCount[nextPlayer];
-        //int origHandCntNextPlayer = G->handCount[nextPlayer];
-        int origCoin = G->coins;
-        int origNumActions = G->numActions;
-        int origDiscardCard1;
-        int origDiscardCard2;
-        int origDeckCard1;
-        int origDeckCard2;
-
-        //Initialize discard cards if used
-        if (G->discardCount[nextPlayer] > 1)
-        {
-            origDiscardCard1 = cardType(G->discard[nextPlayer][0]);
-            origDiscardCard2 = cardType(G->discard[nextPlayer][1]);
-        }
-        else if (G->discardCount[nextPlayer] == 1)
-        {
-            origDiscardCard1 = cardType(G->discard[nextPlayer][0]);
-        }
-        else
-        {
-            origDiscardCard1 = -1;
-        }
-
-        //Initialize deck cards if used
-        if (G->deckCount[nextPlayer] > 1)
-        {
-            origDeckCard1 = cardType(G->deck[nextPlayer][0]);
-            origDeckCard2 = cardType(G->deck[nextPlayer][1]);
-        }
-        else if (G->deckCount[nextPlayer] == 1)
-        {
-            origDeckCard1 = cardType(G->deck[nextPlayer][0]);
-        }
-        else
-        {
-            origDeckCard1 = -1;
-        }
-
-        int handpos;
-        if (G->handCount[thisPlayer] == 0)
-        {
-            handpos = 0;
-        }
-        else
-        {
-            handpos = rand() % G->handCount[thisPlayer];
-        }
-        int choice1 = rand() % 2;
-        int choice2 = rand() % 2;
-        int choice3 = rand() % 2;
-        int bonus = rand() % 2;
-
-        cardEffect(tribute, choice1, choice2, choice3, G, handpos, &bonus);
-
-        if (origDeckCntNextPlayer == 0)
-        {
-            if (origDiscardCntNextPlayer == 0)
-            {
-                if (origNumActions == G->numActions && origCoin == G->coins && origHandCntCPlayer == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else
-                {
-                    failedTests++;
-                }
-            }
-            else if (origDiscardCntNextPlayer == 1)
-            {
-                if (origDiscardCard1 == 1 && G->coins == origCoin + 2 && origNumActions == G->numActions && origHandCntCPlayer == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 2 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else
-                {
-                    if (origDiscardCard1 != 0 && origHandCntCPlayer == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin == G->coins)
-                    {
-                        successfulTests++;
-                    }
-                    else
-                    {
-                        failedTests++;
-                    }
-                }
-            }
-            else
-            {
-                if (origDiscardCard1 == 1 && origDiscardCard2 == 1 && G->coins == origCoin + 4 && origNumActions == G->numActions && origHandCntCPlayer == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 1 && origDiscardCard2 == 2 && G->coins == origCoin + 2 && origNumActions == G->numActions && origHandCntCPlayer + 2 == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 1 && origDiscardCard2 == 3 && G->coins == origCoin + 2 && origNumActions == G->numActions + 2 && origHandCntCPlayer == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 2 && origDiscardCard2 == 1 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions == G->numActions && origCoin + 2 == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 2 && origDiscardCard2 == 2 && origHandCntCPlayer + 4 == G->handCount[thisPlayer] && origNumActions == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 2 && origDiscardCard2 == 3 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 3 && origDiscardCard2 == 1 && origHandCntCPlayer == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin + 2 == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 3 && origDiscardCard2 == 2 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 3 && origDiscardCard2 == 3 && origHandCntCPlayer == G->handCount[thisPlayer] && origNumActions + 4 == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else
-                {
-                    failedTests++;
-                }
-            }
-        }
-        else if (origDeckCntNextPlayer == 1)
-        {
-            if (origDiscardCntNextPlayer == 0)
-            {
-                if (origNumActions == G->numActions && origCoin == G->coins && origHandCntCPlayer == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else
-                {
-                    failedTests++;
-                }
-            }
-            else
-            {
-                if (origDiscardCard1 == 1 && origDeckCard1 == 1 && G->coins == origCoin + 4 && origNumActions == G->numActions && origHandCntCPlayer == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 1 && origDeckCard1 == 2 && G->coins == origCoin + 2 && origNumActions == G->numActions && origHandCntCPlayer + 2 == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 1 && origDeckCard1 == 3 && G->coins == origCoin + 2 && origNumActions == G->numActions + 2 && origHandCntCPlayer == G->handCount[thisPlayer])
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 2 && origDeckCard1 == 1 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions == G->numActions && origCoin + 2 == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 2 && origDeckCard1 == 2 && origHandCntCPlayer + 4 == G->handCount[thisPlayer] && origNumActions == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 2 && origDeckCard1 == 3 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 3 && origDeckCard1 == 1 && origHandCntCPlayer == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin + 2 == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 3 && origDeckCard1 == 2 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else if (origDiscardCard1 == 3 && origDeckCard1 == 3 && origHandCntCPlayer == G->handCount[thisPlayer] && origNumActions + 4 == G->numActions && origCoin == G->coins)
-                {
-                    successfulTests++;
-                }
-                else
-                {
-                    failedTests++;
-                }
-            }
-        }
-        else
-        {
-            if (origDeckCard2 == 1 && origDeckCard1 == 1 && G->coins == origCoin + 4 && origNumActions == G->numActions && origHandCntCPlayer == G->handCount[thisPlayer])
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 1 && origDeckCard1 == 2 && G->coins == origCoin + 2 && origNumActions == G->numActions && origHandCntCPlayer + 2 == G->handCount[thisPlayer])
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 1 && origDeckCard1 == 3 && G->coins == origCoin + 2 && origNumActions == G->numActions + 2 && origHandCntCPlayer == G->handCount[thisPlayer])
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 2 && origDeckCard1 == 1 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions == G->numActions && origCoin + 2 == G->coins)
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 2 && origDeckCard1 == 2 && origHandCntCPlayer + 4 == G->handCount[thisPlayer] && origNumActions == G->numActions && origCoin == G->coins)
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 2 && origDeckCard1 == 3 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin == G->coins)
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 3 && origDeckCard1 == 1 && origHandCntCPlayer == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin + 2 == G->coins)
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 3 && origDeckCard1 == 2 && origHandCntCPlayer + 2 == G->handCount[thisPlayer] && origNumActions + 2 == G->numActions && origCoin == G->coins)
-            {
-                successfulTests++;
-            }
-            else if (origDeckCard2 == 3 && origDeckCard1 == 3 && origHandCntCPlayer == G->handCount[thisPlayer] && origNumActions + 4 == G->numActions && origCoin == G->coins)
-            {
-                successfulTests++;
-            }
-            else
-            {
-                failedTests++;
-            }
-        }
-
-        numberOfTests++;
-        free(G);
     }
 
-    printf("\n >>>>> SUCCESS: Testing complete %s <<<<<\n", TESTCARD);
-    printf("Successful Tests = %d, Failed Tests = %d.\n\n", successfulTests, failedTests);
-
-    return 0;
+    printf("Tribute - Number of Successful Tests: %d out of %d\n", numSuccess, totalTests);
 }

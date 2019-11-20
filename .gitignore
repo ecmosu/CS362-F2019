@@ -45,6 +45,8 @@
 *.idb
 *.pdb
 *.gcov
+*.ut
+*.rt
 
 # Kernel Module Compile Results
 *.mod*
