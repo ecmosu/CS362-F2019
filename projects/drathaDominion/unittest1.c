@@ -94,7 +94,7 @@ void baronUnitTest2()
     {
         if (G.hand[G.whoseTurn][i] == estate)
             estateCountBefore++;
-    }
+    }   
 
     //Save current game state
     struct gameState preG;
@@ -115,6 +115,7 @@ void baronUnitTest2()
     //These two should be accurate though an existing bug at line 36 does not add to hand, but instead adds to discard
     assert(estateCountAfter == (estateCountBefore), "%s - Ending Estate Cards In Hand (%d) == Starting Estate Cards In Hand (%d)\n", messagePrefix, estateCountAfter, (estateCountBefore));
     assert(G.discardCount[G.whoseTurn] == (preG.discardCount[preG.whoseTurn] + 1), "%s - Ending Discard Cards (%d) == Starting Discard Cards + 1 (%d)\n", messagePrefix, G.discardCount[G.whoseTurn], (preG.discardCount[preG.whoseTurn] + 1));
+    assert(G.supplyCount[estate] == (preG.supplyCount[estate] - 1), "%s - End Estate Supply Count(%d) == Start Estate Supply Count - 1 (%d)\n", messagePrefix, G.supplyCount[estate], (preG.supplyCount[estate] - 1));
     assert(result == 0, "%s - (%d) == 0\n", messagePrefix, result);
 }
 
@@ -161,6 +162,7 @@ void baronUnitTest3()
     assert(G.numBuys == (preG.numBuys + 1), "%s - End Num Buys (%d) == Start Num Buys + 1 (%d)\n", messagePrefix, G.numBuys, (preG.numBuys + 1));
     assert(estateCountAfter == (estateCountBefore), "%s - Ending Estate Cards In Hand (%d) == Starting Estate Cards In Hand (%d)\n", messagePrefix, estateCountAfter, (estateCountBefore));
     assert(G.discardCount[G.whoseTurn] == (preG.discardCount[preG.whoseTurn] + 1), "%s - Ending Discard Cards (%d) == Starting Discard Cards + 1 (%d)\n", messagePrefix, G.discardCount[G.whoseTurn], (preG.discardCount[preG.whoseTurn] + 1));
+    assert(G.supplyCount[estate] == (preG.supplyCount[estate] - 1), "%s - End Estate Supply Count(%d) == Start Estate Supply Count - 1 (%d)\n", messagePrefix, G.supplyCount[estate], (preG.supplyCount[estate] - 1));
     assert(result == 0, "%s - (%d) == 0\n", messagePrefix, result);
 }
 

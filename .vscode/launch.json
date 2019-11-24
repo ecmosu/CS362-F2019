@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/projects/morganer/dominion/randomtestcard1.rt",
+            "program": "${workspaceFolder}/projects/drathaDominion/unittest5.ut",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
